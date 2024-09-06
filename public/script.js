@@ -88,7 +88,6 @@ document.addEventListener("DOMContentLoaded", function () {
   function acceptJsonVersion() {
     const file = document.getElementById("jsonFile").files[0];
     if (!file) {
-        console.log("No se seleccionó ningún archivo JSON");
         alert("Por favor, seleccione un archivo JSON primero.");
         return;
     }
@@ -97,15 +96,20 @@ document.addEventListener("DOMContentLoaded", function () {
     reader.onload = function (e) {
         try {
             const data = JSON.parse(e.target.result);
-            console.log("JSON parseado correctamente:", data);
+            console.log("JSON parseado correctamente. Número de clientes:", data.length);
             
-            clearForm();
-            clients = [];
-            foundClients = [];
-            currentClientIndex = 0;
-            currentDuplicateIndex = 0;
-            
-            clients = data;
+            clients = data.map(client => {
+                if (client.photo) {
+                    console.log(`Cliente ${client.identificacionCliente} tiene foto. Longitud:`, client.photo.length);
+                    if (!client.photo.startsWith('data:image')) {
+                        client.photo = 'data:image/jpeg;base64,' + client.photo;
+                    }
+                } else {
+                    console.log(`Cliente ${client.identificacionCliente} no tiene foto.`);
+                }
+                return client;
+            });
+
             if (clients.length > 0) {
                 document.getElementById("searchContainer").style.display = "flex";
                 console.log("Clientes cargados desde JSON:", clients.length);
@@ -113,22 +117,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("fileInfoContainer").style.display = "none";
                 document.getElementById("acceptJsonButton").style.display = "none";
                 localStorage.setItem('lastUsedFilePath', currentFilePath);
-                
-                // Verificar y ajustar las fotos si es necesario
-                clients.forEach((client, index) => {
-                    console.log(`Procesando cliente ${index}:`, client);
-                    if (client.photo) {
-                        console.log(`Cliente ${index} tiene foto:`, client.photo.substring(0, 50) + "...");
-                        if (!client.photo.startsWith('data:image')) {
-                            client.photo = 'data:image/jpeg;base64,' + client.photo;
-                            console.log(`Foto del cliente ${index} ajustada:`, client.photo.substring(0, 50) + "...");
-                        }
-                    } else {
-                        console.log(`Cliente ${index} no tiene foto`);
-                    }
-                });
             } else {
-                console.log("El archivo JSON no contiene datos de clientes");
                 alert("El archivo JSON no contiene datos de clientes.");
             }
         } catch (error) {
@@ -344,9 +333,8 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     if (base64Image) {
-        console.log("Se recibió una imagen base64");
+        console.log("Se recibió una imagen base64. Longitud:", base64Image.length);
         
-        // Asegurarse de que la cadena base64 tenga el prefijo correcto
         let imageSource;
         if (base64Image.startsWith('data:image')) {
             console.log("La imagen ya tiene el prefijo correcto");
@@ -356,33 +344,27 @@ document.addEventListener("DOMContentLoaded", function () {
             imageSource = `data:image/jpeg;base64,${base64Image}`;
         }
 
-        console.log("Asignando src al elemento photo");
-        
-        // Usar una imagen temporal para verificar si la carga es exitosa
         const tempImage = new Image();
         tempImage.onload = function() {
             console.log("La imagen se cargó correctamente");
             photoPreview.src = imageSource;
             photoPreview.style.display = "block";
+            photoPreview.alt = "Foto del cliente";
         };
         tempImage.onerror = function() {
-            console.error("Error al cargar la imagen");
-            // Mostrar una imagen de placeholder o un mensaje de error
-            photoPreview.src = "path/to/placeholder-image.jpg"; // Asegúrate de tener una imagen de placeholder
+            console.error("Error al cargar la imagen. Detalles:", tempImage.src.substring(0, 100) + "...");
+            photoPreview.src = "https://via.placeholder.com/150?text=Error+de+carga";
             photoPreview.style.display = "block";
             photoPreview.alt = "Error al cargar la imagen del cliente";
         };
         tempImage.src = imageSource;
     } else {
-        console.log("No se proporcionó imagen, ocultando photo");
-        photoPreview.src = "";
-        photoPreview.style.display = "none";
-        photoPreview.alt = "";
+        console.log("No se proporcionó imagen, mostrando placeholder");
+        photoPreview.src = "https://via.placeholder.com/150?text=Sin+imagen";
+        photoPreview.style.display = "block";
+        photoPreview.alt = "No hay imagen disponible";
     }
-
-    console.log("Finalizando updatePhotoPreview");
 }
-
   function saveAdditionalInfo(event) {
     if (foundClients.length > 0) {
       foundClients[currentDuplicateIndex].additionalInfo = event.target.value;
