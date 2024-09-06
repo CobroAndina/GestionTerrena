@@ -5,7 +5,13 @@ document.addEventListener("DOMContentLoaded", function () {
   let currentDuplicateIndex = 0;
   let currentFilePath = localStorage.getItem('lastUsedFilePath') || "proyecto/datos/clientes.json";
   let fileLastModified = null;
-
+  let debounceTimer;
+  function debouncedSearch() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+          searchClient();
+      }, 300); // espera 300ms antes de ejecutar la búsqueda
+  }
   // Event Listeners
   document.getElementById("jsonFile").addEventListener("change", handleJSONSelect);
   document.getElementById("dataFile").addEventListener("change", handleFileSelect);
@@ -13,7 +19,7 @@ document.addEventListener("DOMContentLoaded", function () {
   document.getElementById("nextClient").addEventListener("click", showNextDuplicate);
   document.getElementById("photoUpload").addEventListener("change", handlePhotoUpload);
   document.getElementById("additionalInfo").addEventListener("input", saveAdditionalInfo);
-  document.getElementById("searchButton").addEventListener("click", searchClient);
+  document.getElementById("searchButton").addEventListener("click", debouncedSearch);
   document.getElementById("downloadStaticHtmlButton").addEventListener("click", generateStaticHtml);
   document.getElementById("downloadJsonButton").addEventListener("click", saveJSON);
   document.getElementById("acceptJsonButton").addEventListener("click", acceptJsonVersion);
@@ -27,27 +33,23 @@ document.addEventListener("DOMContentLoaded", function () {
     
     const formElements = document.querySelectorAll("#clientForm input, #clientForm textarea");
     formElements.forEach(element => {
-      if (element.type === "file") {
-        element.value = "";
-      } else if (element.type === "date") {
-        element.value = "";
-      } else {
-        element.value = "";
-      }
+        if (element.type === "file") {
+            element.value = "";
+        } else if (element.type === "date") {
+            element.value = "";
+        } else {
+            element.value = "";
+        }
     });
 
-    const photoPreview = document.getElementById("photoPreview");
-    if (photoPreview) {
-      photoPreview.src = "";
-      photoPreview.style.display = "none";
-    }
+    updatePhotoPreview(null);
 
     // Ocultar el formulario después de limpiarlo
     document.getElementById("clientForm").style.display = "none";
 
     updateNavigationButtons();
     console.log("Formulario limpiado correctamente");
-  }
+}
 
   function handleJSONSelect(event) {
     console.log("Archivo JSON seleccionado...");
@@ -86,48 +88,60 @@ document.addEventListener("DOMContentLoaded", function () {
   function acceptJsonVersion() {
     const file = document.getElementById("jsonFile").files[0];
     if (!file) {
-      alert("Por favor, seleccione un archivo JSON primero.");
-      return;
+        console.log("No se seleccionó ningún archivo JSON");
+        alert("Por favor, seleccione un archivo JSON primero.");
+        return;
     }
 
     const reader = new FileReader();
     reader.onload = function (e) {
-      try {
-        const data = JSON.parse(e.target.result);
-        
-        // Limpiar el formulario y resetear las variables globales
-        clearForm();
-        clients = [];
-        foundClients = [];
-        currentClientIndex = 0;
-        currentDuplicateIndex = 0;
-        
-        // Cargar los nuevos datos
-        clients = data;
-        if (clients.length > 0) {
-          document.getElementById("searchContainer").style.display = "flex";
-          console.log("Clientes cargados desde JSON:", clients.length);
-          updateFilePathDisplay();
-          document.getElementById("fileInfoContainer").style.display = "none";
-          document.getElementById("acceptJsonButton").style.display = "none";
-          localStorage.setItem('lastUsedFilePath', currentFilePath);
-          
-          // No mostrar ningún cliente automáticamente
-          // showClient(clients[0]);
-        } else {
-          alert("El archivo JSON no contiene datos de clientes.");
+        try {
+            const data = JSON.parse(e.target.result);
+            console.log("JSON parseado correctamente:", data);
+            
+            clearForm();
+            clients = [];
+            foundClients = [];
+            currentClientIndex = 0;
+            currentDuplicateIndex = 0;
+            
+            clients = data;
+            if (clients.length > 0) {
+                document.getElementById("searchContainer").style.display = "flex";
+                console.log("Clientes cargados desde JSON:", clients.length);
+                updateFilePathDisplay();
+                document.getElementById("fileInfoContainer").style.display = "none";
+                document.getElementById("acceptJsonButton").style.display = "none";
+                localStorage.setItem('lastUsedFilePath', currentFilePath);
+                
+                // Verificar y ajustar las fotos si es necesario
+                clients.forEach((client, index) => {
+                    console.log(`Procesando cliente ${index}:`, client);
+                    if (client.photo) {
+                        console.log(`Cliente ${index} tiene foto:`, client.photo.substring(0, 50) + "...");
+                        if (!client.photo.startsWith('data:image')) {
+                            client.photo = 'data:image/jpeg;base64,' + client.photo;
+                            console.log(`Foto del cliente ${index} ajustada:`, client.photo.substring(0, 50) + "...");
+                        }
+                    } else {
+                        console.log(`Cliente ${index} no tiene foto`);
+                    }
+                });
+            } else {
+                console.log("El archivo JSON no contiene datos de clientes");
+                alert("El archivo JSON no contiene datos de clientes.");
+            }
+        } catch (error) {
+            console.error("Error al parsear JSON:", error);
+            alert("Error al cargar el archivo JSON. Por favor, verifica el formato.");
         }
-      } catch (error) {
-        console.error("Error al parsear JSON:", error);
-        alert("Error al cargar el archivo JSON. Por favor, verifica el formato.");
-      }
     };
     reader.onerror = function (error) {
-      console.error("Error al leer el archivo:", error);
-      alert("Error al leer el archivo. Por favor, inténtalo de nuevo.");
+        console.error("Error al leer el archivo:", error);
+        alert("Error al leer el archivo. Por favor, inténtalo de nuevo.");
     };
     reader.readAsText(file);
-  }
+}
 
   function handleFileSelect(event) {
     console.log("Cargando archivo CSV/TXT...");
@@ -235,35 +249,44 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function showClient(client) {
     if (!client) {
-      console.error("No se encontró cliente para mostrar.");
-      return;
+        console.error("No se encontró cliente para mostrar.");
+        return;
     }
 
-    console.log("Mostrando cliente:", client);
+    console.log("Mostrando cliente:", JSON.stringify(client, null, 2));
 
     document.getElementById("clientForm").style.display = "block";
 
     Object.keys(client).forEach(key => {
-      const element = document.getElementById(key);
-      if (element) {
-        if (element.type === "date") {
-          element.value = formatDate(client[key]);
-        } else if (key === "photo") {
-          const photoPreview = document.getElementById("photoPreview");
-          if (client[key]) {
-            photoPreview.src = client[key];
-            photoPreview.style.display = "block";
-          } else {
-            photoPreview.style.display = "none";
-          }
+        const element = document.getElementById(key);
+        if (element) {
+            console.log(`Procesando campo: ${key}`);
+            if (element.type === "date") {
+                element.value = formatDate(client[key]);
+                console.log(`Campo de fecha ${key} actualizado:`, element.value);
+            } else if (key === "photo") {
+                console.log("Procesando foto:");
+                if (client[key]) {
+                    console.log("Cliente tiene foto");
+                    updatePhotoPreview(client[key]);
+                } else {
+                    console.log("Cliente no tiene foto");
+                    updatePhotoPreview(null); // Esto ocultará la vista previa de la foto
+                }
+            } else {
+                element.value = sanitizeInput(client[key] || "");
+                console.log(`Campo ${key} actualizado:`, element.value);
+            }
         } else {
-          element.value = sanitizeInput(client[key] || "");
+            console.warn(`No se encontró elemento para el campo ${key}`);
         }
-      }
     });
 
+    console.log("Actualizando botones de navegación");
     updateNavigationButtons();
-  }
+    
+    console.log("Cliente mostrado completamente");
+}
 
   function showPreviousDuplicate() {
     if (currentDuplicateIndex > 0) {
@@ -294,10 +317,9 @@ document.addEventListener("DOMContentLoaded", function () {
       const reader = new FileReader();
       reader.onload = function (e) {
         if (foundClients.length > 0) {
-          foundClients[currentDuplicateIndex].photo = e.target.result;
-          const photoPreview = document.getElementById("photoPreview");
-          photoPreview.src = e.target.result;
-          photoPreview.style.display = "block";
+          const base64Image = e.target.result;
+          foundClients[currentDuplicateIndex].photo = base64Image;
+          updatePhotoPreview(base64Image);
         } else {
           console.error("No hay cliente seleccionado para agregar la foto");
         }
@@ -311,6 +333,55 @@ document.addEventListener("DOMContentLoaded", function () {
       alert("Selecciona un archivo de imagen válido.");
     }
   }
+
+  function updatePhotoPreview(base64Image) {
+    console.log("Iniciando updatePhotoPreview");
+    const photoPreview = document.getElementById("photo");
+    
+    if (!photoPreview) {
+        console.error("Error: No se encontró el elemento con id 'photo'");
+        return;
+    }
+
+    if (base64Image) {
+        console.log("Se recibió una imagen base64");
+        
+        // Asegurarse de que la cadena base64 tenga el prefijo correcto
+        let imageSource;
+        if (base64Image.startsWith('data:image')) {
+            console.log("La imagen ya tiene el prefijo correcto");
+            imageSource = base64Image;
+        } else {
+            console.log("Añadiendo prefijo a la imagen");
+            imageSource = `data:image/jpeg;base64,${base64Image}`;
+        }
+
+        console.log("Asignando src al elemento photo");
+        
+        // Usar una imagen temporal para verificar si la carga es exitosa
+        const tempImage = new Image();
+        tempImage.onload = function() {
+            console.log("La imagen se cargó correctamente");
+            photoPreview.src = imageSource;
+            photoPreview.style.display = "block";
+        };
+        tempImage.onerror = function() {
+            console.error("Error al cargar la imagen");
+            // Mostrar una imagen de placeholder o un mensaje de error
+            photoPreview.src = "path/to/placeholder-image.jpg"; // Asegúrate de tener una imagen de placeholder
+            photoPreview.style.display = "block";
+            photoPreview.alt = "Error al cargar la imagen del cliente";
+        };
+        tempImage.src = imageSource;
+    } else {
+        console.log("No se proporcionó imagen, ocultando photo");
+        photoPreview.src = "";
+        photoPreview.style.display = "none";
+        photoPreview.alt = "";
+    }
+
+    console.log("Finalizando updatePhotoPreview");
+}
 
   function saveAdditionalInfo(event) {
     if (foundClients.length > 0) {
@@ -360,12 +431,12 @@ document.addEventListener("DOMContentLoaded", function () {
                     <label>${key}:</label>
                     <p>${sanitizeInput(value) || 'N/A'}</p>
                   </div>
-                `;
+                  `;
               }
             }).join('')}
           </div>
         `).join('')}
-</body>
+      </body>
       </html>
     `;
 
@@ -384,7 +455,16 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
 
-    const dataStr = JSON.stringify(clients, null, 2);
+    const clientsToSave = JSON.parse(JSON.stringify(clients));
+
+    clientsToSave.forEach(client => {
+      if (client.photo && client.photo.startsWith('data:image')) {
+        // Eliminar el prefijo 'data:image/jpeg;base64,' para ahorrar espacio
+        client.photo = client.photo.split(',')[1];
+      }
+    });
+
+    const dataStr = JSON.stringify(clientsToSave, null, 2);
     const dataBlob = new Blob([dataStr], { type: "application/json" });
     const url = URL.createObjectURL(dataBlob);
     const a = document.createElement("a");
@@ -446,10 +526,4 @@ document.addEventListener("DOMContentLoaded", function () {
 
   // Llamar a la función de inicialización
   init();
-
 });
-
-
-
-
-
