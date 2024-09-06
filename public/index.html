@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Aplicación de gestión de información de clientes">
+  <title>Información del Cliente</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Información del Cliente</h1>
+
+    <section class="file-management">
+      <!-- Carga de archivo JSON -->
+      <div class="file-upload">
+        <label for="jsonFile">Cargar JSON:</label>
+        <input type="file" id="jsonFile" accept=".json">
+      </div>
+
+      <!-- Información del archivo y botón de aceptar -->
+      <div id="fileInfoContainer" style="display: none;">
+        <p id="fileInfo"></p>
+        <button id="acceptJsonButton" type="button">Aceptar versión</button>
+      </div>
+
+      <!-- Carga de archivo CSV/TXT -->
+      <div class="file-upload">
+        <label for="dataFile">Cargar CSV/TXT:</label>
+        <input type="file" id="dataFile" accept=".csv,.txt">
+      </div>
+
+      <div class="file-path-container">
+        <label for="filePathInput">Ruta del archivo:</label>
+        <input type="text" id="filePathInput" class="file-path-input" readonly aria-readonly="true">
+      </div>
+    </section>
+
+    <!-- Formulario de cliente -->
+    <form id="clientForm" class="client-form">
+      <div class="form-group">
+        <label for="fechaProceso">Fecha Proceso:</label>
+        <input type="date" id="fechaProceso" readonly aria-readonly="true">
+      </div>
+
+      <div class="form-group">
+        <label for="identificacionCliente">Identificación Cliente:</label>
+        <input type="text" id="identificacionCliente" readonly aria-readonly="true">
+      </div>
+
+      <div class="form-group">
+        <label for="operacion">Operación:</label>
+        <input type="text" id="operacion" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="codigoProveedorGestion">Código Proveedor Gestión:</label>
+        <input type="text" id="codigoProveedorGestion" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="codigoNodoGestion">Código Nodo Gestión:</label>
+        <input type="text" id="codigoNodoGestion" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="identificacionPersonaGestionada">Identificación Persona Gestionada:</label>
+        <input type="text" id="identificacionPersonaGestionada" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="fechaGestionSistemaGestion">Fecha Gestión Sistema:</label>
+        <input type="text" id="fechaGestionSistemaGestion" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="agendamientoProxVisita">Agendamiento Próxima Visita:</label>
+        <input type="text" id="agendamientoProxVisita" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="tipoUbicacion">Tipo de Ubicación:</label>
+        <input type="text" id="tipoUbicacion" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="pais">País:</label>
+        <input type="text" id="pais" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="codigoProvincia">Código Provincia:</label>
+        <input type="text" id="codigoProvincia" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="provincia">Provincia:</label>
+        <input type="text" id="provincia" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="canton">Cantón:</label>
+        <input type="text" id="canton" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="ciudad">Ciudad:</label>
+        <input type="text" id="ciudad" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="parroquia">Parroquia:</label>
+        <input type="text" id="parroquia" disabled>
+      </div>
+
+      <div class="form-group">
+        <label for="direccionCompleta">Dirección Completa:</label>
+        <textarea id="direccionCompleta" rows="3" readonly aria-readonly="true"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="additionalInfo">Información Adicional:</label>
+        <textarea id="additionalInfo" rows="3"></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="photoUpload">Subir Foto:</label>
+        <input type="file" id="photoUpload" accept="image/*">
+        <img id="photoPreview" class="photo-preview" alt="Vista previa de la foto" style="display: none;">
+      </div>
+    </form>
+
+    <div class="form-navigation">
+      <button type="button" id="prevClient">Anterior</button>
+      <button type="button" id="nextClient">Siguiente</button>
+    </div>
+
+    <!-- Búsqueda de cliente -->
+    <div id="searchContainer" class="search-container">
+      <label for="searchInput">Buscar por ID Cliente:</label>
+      <input type="text" id="searchInput" placeholder="Ingrese ID del cliente">
+      <button type="button" id="searchButton">Buscar</button>
+    </div>
+
+    <!-- Botones de acción -->
+    <div class="action-buttons">
+      <button type="button" id="downloadStaticHtmlButton">Generar HTML Estático</button>
+      <button type="button" id="downloadJsonButton">Guardar JSON</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
+
+
+
+
