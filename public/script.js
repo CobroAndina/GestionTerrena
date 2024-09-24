@@ -548,7 +548,8 @@ function updateFilePath() {
         console.log("Ruta de archivo actualizada:", currentFilePath);
     }
 }
-// **23. Función para Generar HTML Estático Mejorado**
+
+// **23. Función para generar el HTML estático**
 function generateStaticHtml() {
     console.log("Generando HTML estático para todos los clientes...");
     db.clients.toArray().then(clients => {
@@ -564,223 +565,123 @@ function generateStaticHtml() {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Informe de Visitas Gestión Terrena</title>
-                <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+                <script src="https://cdn.tailwindcss.com"></script>
                 <style>
                     @media print {
-                        .print\:shadow-none {
-                            box-shadow: none !important;
-                        }
-                        .page-break {
-                            page-break-after: always;
-                        }
-                    }
-                    /* Estilos personalizados para las imágenes */
-                    .photo-container {
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        margin-top: 20px;
-                    }
-                    .photo {
-                        max-width: 90%;
-                        max-height: 400px;
-                        object-fit: contain;
-                        border-radius: 10px;
-                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                    }
-                    .image-caption {
-                        text-align: center;
-                        margin-top: 10px;
-                        font-size: 0.875rem;
-                        color: #6b7280; /* Color gris de Tailwind */
-                    }
-                    /* Paginación de clientes */
-                    .client-section {
-                        margin-bottom: 40px;
-                        page-break-inside: avoid;
-                    }
-                    .client-page {
-                        padding: 20px;
-                        border: 1px solid #e2e8f0;
-                        background-color: #fff;
-                        border-radius: 10px;
-                        margin-bottom: 40px;
-                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-                        page-break-after: always;
-                    }
-                    .container {
-                        margin-top: 20px;
-                        margin-bottom: 20px;
-                    }
-                    /* Sombra y bordes para contenedores */
-                    .rounded-lg {
-                        border-radius: 10px;
-                    }
-                    .shadow-md {
-                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                        body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+                        .page-break { page-break-after: always; }
                     }
                 </style>
-                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@0.263.1/font/lucide.min.css">
             </head>
-            <body class="bg-gray-100">
-                <div class="container mx-auto max-w-5xl bg-white rounded-lg shadow-md p-6">
-                    <header class="border-b pb-6 mb-6">
-                        <h2 class="text-3xl font-bold text-center flex items-center justify-center">
-                            <i class="lucide-users mr-2"></i>INFORME DE VISITAS GESTIÓN TERRENA
-                        </h2>
-                        <p class="text-center text-gray-600">Fecha de generación: ${new Date().toLocaleDateString('es-ES')}</p>
-                    </header>
-
-                    ${clients.map((client, index) => `
-                        <div class="client-page">
-                            <section>
-                                <h3 class="text-lg font-semibold flex items-center mb-2">
-                                    <i class="lucide-user mr-2"></i>DATOS CLIENTE
-                                </h3>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">NOMBRE CLIENTE</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.nombreCliente)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">OPERACIÓN</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.operacion)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">PRODUCTO</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.producto)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">TELÉFONO DEL CLIENTE</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.telefonoCliente)}</p>
-                                    </div>
-                                    <div class="space-y-2 col-span-2">
-                                        <label class="text-sm font-medium">DIRECCIÓN DE VISITA</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.direccionVisita)}</p>
-                                    </div>
-                                    <div class="space-y-2 col-span-2">
-                                        <label class="text-sm font-medium">TIPO DE DIRECCIÓN DE VISITA</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.tipoDireccionVisita)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">FECHA Y HORA DE VISITA</label>
-                                        <p class="border p-2 rounded w-full">${formatDate(client.fechaHoraVisita)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">NOMBRE DEL GESTOR</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.nombreGestor)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">LATITUD</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.latitud)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">LONGITUD</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.longitud)}</p>
+            <body class="bg-gray-100 p-8">
+                ${clients.map((client, index) => `
+                    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden mb-8 page-break">
+                        <div class="px-6 py-4 bg-gray-200 border-b border-gray-300">
+                            <h1 class="text-2xl font-bold text-gray-800">INFORME DE VISITAS GESTIÓN TERRENA</h1>
+                        </div>
+                        <div class="p-6 space-y-6">
+                            <div class="bg-gray-50 p-4 rounded-lg shadow">
+                                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                    DATOS CLIENTE
+                                </h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    ${generateField('NOMBRE CLIENTE', client.nombreCliente)}
+                                    ${generateField('OPERACIÓN', client.operacion)}
+                                    ${generateField('PRODUCTO', client.producto)}
+                                    ${generateField('TELEFONO DEL CLIENTE', client.telefonoCliente)}
+                                    ${generateField('DIRECCIÓN DE LA VISITA', client.direccionVisita, 'col-span-2')}
+                                    ${generateField('TIPO DE DIRECCIÓN DE VISITA', client.tipoDireccionVisita, 'col-span-2')}
+                                    ${generateField('FECHA Y HORA DE VISITA', formatDate(client.fechaHoraVisita))}
+                                    ${generateField('NOMBRE DEL GESTOR', client.nombreGestor)}
+                                </div>
+                                <div class="mt-4">
+                                    <h3 class="font-semibold mb-2">GEOLOCALIZACIÓN DEL CLIENTE</h3>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        ${generateField('LATITUD', client.latitud)}
+                                        ${generateField('LONGITUD', client.longitud)}
                                     </div>
                                 </div>
-                            </section>
+                            </div>
 
-                            <section>
-                                <h3 class="text-lg font-semibold flex items-center mb-2">
-                                    <i class="lucide-calendar mr-2"></i>ESTADO DE VISITA
-                                </h3>
-                                <div class="space-y-2">
-                                    <label class="text-sm font-medium">FECHA Y HORA PRÓXIMA VISITA</label>
-                                    <p class="border p-2 rounded w-full">${formatDate(client.agendamiento)}</p>
+                            <div class="bg-gray-50 p-4 rounded-lg shadow">
+                                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    ESTADO DE VISITA
+                                </h2>
+                                ${generateField('FECHA Y HORA PRÓXIMA VISITA', formatDate(client.agendamiento))}
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-lg shadow">
+                                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                    GESTIÓN DOMICILIARIA
+                                </h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    ${generateField('RIESGO', client.riesgo)}
+                                    ${generateField('EXIGIBLE', client.exigible)}
+                                    ${generateField('DIAS MORA', client.diasMora)}
                                 </div>
-                            </section>
+                            </div>
 
-                            <section>
-                                <h3 class="text-lg font-semibold flex items-center mb-2">
-                                    <i class="lucide-briefcase mr-2"></i>GESTIÓN DOMICILIARIA
-                                </h3>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">PRODUCTO</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.producto)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">RIESGO</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.riesgo)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">EXIGIBLE</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.exigible)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">DÍAS MORA</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.diasMora)}</p>
-                                    </div>
+                            <div class="bg-gray-50 p-4 rounded-lg shadow">
+                                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    ANTECEDENTES
+                                </h2>
+                                ${generateField('RESUMEN', client.resumen, 'col-span-2')}
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-lg shadow">
+                                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                    RESULTADO DE LA GESTIÓN
+                                </h2>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    ${generateField('TIPO DE CONTACTO', client.tipoContacto)}
+                                    ${generateField('RESPUESTA DE CONTACTO', client.respuestaContacto)}
+                                    ${generateField('MOTIVO DE NO PAGO', client.motivoNoPago)}
+                                    ${generateField('OBSERVACIÓN', client.observacion, 'col-span-2')}
                                 </div>
-                            </section>
+                            </div>
 
-                            <section>
-                                <h3 class="text-lg font-semibold flex items-center mb-2">
-                                    <i class="lucide-file-text mr-2"></i>ANTECEDENTES
-                                </h3>
-                                <div class="space-y-2">
-                                    <label class="text-sm font-medium">RESUMEN</label>
-                                    <p class="border p-2 rounded w-full">${sanitizeInput(client.resumen)}</p>
+                            <div class="bg-gray-50 p-4 rounded-lg shadow">
+                                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    PROMESA DE PAGO
+                                </h2>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    ${generateField('FECHA COMPROMISO/PAGO', formatDate(client.fechaCompromisoPago))}
+                                    ${generateField('VALOR', client.valor)}
+                                    ${generateField('TELÉFONO NUEVO', client.telefonoNuevo)}
                                 </div>
-                            </section>
+                            </div>
 
-                            <section>
-                                <h3 class="text-lg font-semibold flex items-center mb-2">
-                                    <i class="lucide-clock mr-2"></i>RESULTADO DE LA GESTIÓN
-                                </h3>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">TIPO DE CONTACTO</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.tipoContacto)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">RESPUESTA DE CONTACTO</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.respuestaContacto)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">MOTIVO DE NO PAGO</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.motivoNoPago)}</p>
-                                    </div>
-                                    <div class="space-y-2 col-span-2">
-                                        <label class="text-sm font-medium">OBSERVACIÓN</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.observacion)}</p>
-                                    </div>
-                                </div>
-                            </section>
+                            <div class="bg-gray-50 p-4 rounded-lg shadow">
+                                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    INFORMACIÓN ADICIONAL
+                                </h2>
+                                ${generateField('', client.additionalInfo, 'col-span-2')}
+                            </div>
 
-                            <section>
-                                <h3 class="text-lg font-semibold flex items-center mb-2">
-                                    <i class="lucide-dollar-sign mr-2"></i>PROMESA DE PAGO
-                                </h3>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">FECHA COMPROMISO/PAGO</label>
-                                        <p class="border p-2 rounded w-full">${formatDate(client.fechaCompromisoPago)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">VALOR</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.valor)}</p>
-                                    </div>
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-medium">TELÉFONO NUEVO</label>
-                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.telefonoNuevo)}</p>
-                                    </div>
-                                </div>
-                            </section>
-
-                            <section>
-                                <h3 class="text-lg font-semibold flex items-center mb-2">
-                                    <i class="lucide-camera mr-2"></i>FOTO DE RESPALDO
-                                </h3>
-                                <div class="photo-container">
+                            <div class="bg-gray-50 p-4 rounded-lg shadow">
+                                <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                    FOTO DE RESPALDO
+                                </h2>
+                                <div class="mt-2">
                                     ${getClientPhotoHtml(client)}
                                 </div>
-                                <p class="image-caption">Foto proporcionada por el cliente</p>
-                            </section>
+                            </div>
                         </div>
-                    `).join('')}
-                </div>
+                    </div>
+                `).join('')}
+                <script>
+                    window.onload = function() {
+                        window.print();
+                    }
+                </script>
             </body>
             </html>
         `;
@@ -794,27 +695,35 @@ function generateStaticHtml() {
         document.body.removeChild(downloadLink);
         URL.revokeObjectURL(downloadLink.href);
     }).catch(error => {
+        console.error("Error al generar HTML estático:", error);
         alert("Error al generar el HTML estático. Por favor, inténtalo de nuevo.");
     });
 }
 
-// Función para obtener la foto del cliente
+function generateField(label, value, className = '') {
+    return `
+        <div class="${className}">
+            <label class="block text-sm font-medium text-gray-700">${label}</label>
+            <p class="mt-1 p-2 w-full border border-gray-300 rounded-md bg-gray-50">${sanitizeInput(value) || 'N/A'}</p>
+        </div>
+    `;
+}
+
 function getClientPhotoHtml(client) {
     if (client.photo) {
-        return `<img src="${sanitizeInput(client.photo)}" alt="Foto del cliente" class="photo"/>`;
+        return `<img src="${sanitizeInput(client.photo)}" alt="Foto del cliente" class="max-w-full h-auto rounded-lg shadow-md"/>`;
     } else if (client.urlWeb) {
         const urlWeb = client.urlWeb.trim();
         if (isValidUrl(urlWeb)) {
-            return `<img src="${sanitizeInput(urlWeb)}" alt="Foto del cliente desde URL WEB" class="photo"/>`;
+            return `<img src="${sanitizeInput(urlWeb)}" alt="Foto del cliente desde URL WEB" class="max-w-full h-auto rounded-lg shadow-md"/>`;
         } else {
-            return '<p>URL WEB no es válida.</p>';
+            return '<p class="text-red-500">URL WEB no es válida.</p>';
         }
     } else {
-        return '<p>No hay foto disponible.</p>';
+        return '<p class="text-gray-500">No hay foto disponible.</p>';
     }
 }
 
-// Función para validar URL
 function isValidUrl(url) {
     try {
         new URL(url);
@@ -822,6 +731,31 @@ function isValidUrl(url) {
     } catch (e) {
         return false;
     }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString('es-ES', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function sanitizeInput(input) {
+    if (typeof input !== 'string') return input;
+    return input.replace(/[<>&'"]/g, function (c) {
+        switch (c) {
+            case '<': return '&lt;';
+            case '>': return '&gt;';
+            case '&': return '&amp;';
+            case "'": return '&#39;';
+            case '"': return '&quot;';
+        }
+    });
 }
 // **24. Función para Limpiar el Formulario**
 function clearForm() {
