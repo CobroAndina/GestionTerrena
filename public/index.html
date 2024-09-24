@@ -1,160 +1,300 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Gestión de Clientes</title>
-    <link rel="stylesheet" href="styles.css?v=1.0">
-    <!-- Incluye las bibliotecas necesarias -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/browser-image-compression/2.0.0/browser-image-compression.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/lucide-static@0.263.1/font/lucide.min.css" rel="stylesheet">
+    <!-- Dexie.js for IndexedDB -->
     <script src="https://unpkg.com/dexie@latest/dist/dexie.js"></script>
-    <!-- Tu script principal se incluye al final del body -->
+    <!-- Image Compression Library -->
+    <script src="https://unpkg.com/browser-image-compression@latest/dist/browser-image-compression.js"></script>
+    <!-- Papa Parse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        @media print {
+            .print\:shadow-none {
+                box-shadow: none !important;
+            }
+        }
+    </style>
 </head>
-<body>
-  <div class="container">
-    <h1>Información del Cliente</h1>
+<body class="bg-gray-100">
+    <!-- Contenedor principal -->
+    <div class="w-full max-w-4xl mx-auto my-8 bg-white rounded-lg shadow-md print:shadow-none">
+        <!-- Header -->
+        <header class="border-b p-6">
+            <h2 class="text-2xl font-bold flex items-center">
+                <i class="lucide-users mr-2"></i>Gestión de Clientes
+            </h2>
+        </header>
 
-    <section class="file-management">
-      <!-- Carga de archivo JSON -->
-      <div class="file-upload">
-        <label for="jsonFile">Cargar JSON:</label>
-        <input type="file" id="jsonFile" accept=".json">
-      </div>
+        <!-- Sección de carga de archivos -->
+        <main>
+            <section class="p-6">
+                <!-- Carga de archivo JSON -->
+                <div class="mb-4">
+                    <label for="jsonFile" class="block text-sm font-medium text-gray-700">Cargar JSON:</label>
+                    <input type="file" id="jsonFile" accept=".json" class="mt-1 p-2 border rounded w-full" />
+                </div>
+                <!-- Información del archivo y botón de aceptar -->
+                <div id="fileInfoContainer" class="mb-4 hidden">
+                    <p id="fileInfo" class="text-gray-700"></p>
+                    <button id="acceptJsonButton" type="button" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center hidden">
+                        <i class="lucide-check mr-2"></i>Aceptar versión
+                    </button>
+                </div>
+                <!-- Carga de archivo CSV/TXT -->
+                <div class="mb-4">
+                    <label for="dataFile" class="block text-sm font-medium text-gray-700">Cargar CSV/TXT:</label>
+                    <input type="file" id="dataFile" accept=".csv,.txt" class="mt-1 p-2 border rounded w-full" />
+                </div>
+                <!-- Ruta del archivo -->
+                <div class="mb-4">
+                    <label for="filePathInput" class="block text-sm font-medium text-gray-700">Ruta del archivo:</label>
+                    <input type="text" id="filePathInput" class="mt-1 p-2 border rounded w-full bg-gray-50" readonly />
+                </div>
+            </section>
 
-      <!-- Información del archivo y botón de aceptar -->
-      <div id="fileInfoContainer" style="display: none;">
-        <p id="fileInfo"></p>
-        <button id="acceptJsonButton" type="button">Aceptar versión</button>
-      </div>
+            <!-- Contenedor de búsqueda -->
+            <div id="searchContainer" class="flex items-center p-6 hidden">
+                <input type="text" id="searchInput" placeholder="Ingrese identificación del cliente" class="border p-2 rounded w-full" />
+                <button type="button" id="searchButton" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded ml-2 flex items-center">
+                    <i class="lucide-search mr-2"></i>Buscar Cliente
+                </button>
+            </div>
 
-      <!-- Carga de archivo CSV/TXT -->
-      <div class="file-upload">
-        <label for="dataFile">Cargar CSV/TXT:</label>
-        <input type="file" id="dataFile" accept=".csv,.txt">
-      </div>
+            <!-- Formulario de Cliente -->
+            <form id="clientForm" class="p-6 grid grid-cols-1 gap-6 hidden">
+                <!-- Datos Cliente -->
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold flex items-center mb-2">
+                        <i class="lucide-user mr-2"></i>DATOS CLIENTE
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Identificación del Cliente -->
+                        <div class="space-y-2">
+                            <label for="identificacionCliente" class="text-sm font-medium">IDENTIFICACIÓN</label>
+                            <input type="text" id="identificacionCliente" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Nombre Cliente -->
+                        <div class="space-y-2">
+                            <label for="nombreCliente" class="text-sm font-medium">NOMBRE CLIENTE</label>
+                            <input type="text" id="nombreCliente" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Operación -->
+                        <div class="space-y-2">
+                            <label for="operacion" class="text-sm font-medium">OPERACIÓN</label>
+                            <input type="text" id="operacion" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Producto -->
+                        <div class="space-y-2">
+                            <label for="producto" class="text-sm font-medium">PRODUCTO</label>
+                            <input type="text" id="producto" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Teléfono del Cliente -->
+                        <div class="space-y-2">
+                            <label for="telefonoCliente" class="text-sm font-medium">TELÉFONO DEL CLIENTE</label>
+                            <input type="text" id="telefonoCliente" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Dirección de la Visita -->
+                        <div class="space-y-2 col-span-2">
+                            <label for="direccionVisita" class="text-sm font-medium">DIRECCIÓN DE LA VISITA</label>
+                            <input type="text" id="direccionVisita" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Tipo de Dirección de Visita -->
+                        <div class="space-y-2 col-span-2">
+                            <label for="tipoDireccionVisita" class="text-sm font-medium">TIPO DE DIRECCIÓN DE VISITA</label>
+                            <input type="text" id="tipoDireccionVisita" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Fecha y Hora de Visita -->
+                        <div class="space-y-2">
+                            <label for="fechaHoraVisita" class="text-sm font-medium">FECHA Y HORA DE VISITA</label>
+                            <input type="datetime-local" id="fechaHoraVisita" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Nombre del Gestor -->
+                        <div class="space-y-2">
+                            <label for="nombreGestor" class="text-sm font-medium">NOMBRE DEL GESTOR</label>
+                            <input type="text" id="nombreGestor" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Geolocalización del Cliente -->
+                        <div class="mt-4 space-y-2 col-span-2">
+                            <label class="text-sm font-medium">GEOLOCALIZACIÓN DEL CLIENTE</label>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="space-y-2">
+                                    <label for="latitud" class="text-sm font-medium">LATITUD</label>
+                                    <input type="text" id="latitud" class="border p-2 rounded w-full" readonly />
+                                </div>
+                                <div class="space-y-2">
+                                    <label for="longitud" class="text-sm font-medium">LONGITUD</label>
+                                    <input type="text" id="longitud" class="border p-2 rounded w-full" readonly />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-      <div class="file-path-container">
-        <label for="filePathInput">Ruta del archivo:</label>
-        <input type="text" id="filePathInput" class="file-path-input" readonly aria-readonly="true">
-      </div>
-    </section>
+                <!-- Estado de Visita -->
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold flex items-center mb-2">
+                        <i class="lucide-check-square mr-2"></i>ESTADO DE VISITA
+                    </h3>
+                    <div class="space-y-2">
+                        <label for="agendamiento" class="text-sm font-medium">FECHA Y HORA PRÓXIMA VISITA</label>
+                        <input type="datetime-local" id="agendamiento" class="border p-2 rounded w-full" readonly />
+                    </div>
+                </div>
 
-    <!-- Formulario de cliente -->
-    <form id="clientForm" class="client-form">
-      <div class="form-group">
-        <label for="fechaProceso">Fecha Proceso:</label>
-        <input type="date" id="fechaProceso" readonly aria-readonly="true">
-      </div>
+                <!-- Gestión Domiciliaria -->
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold flex items-center mb-2">
+                        <i class="lucide-briefcase mr-2"></i>GESTIÓN DOMICILIARIA
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Riesgo -->
+                        <div class="space-y-2">
+                            <label for="riesgo" class="text-sm font-medium">RIESGO</label>
+                            <input type="text" id="riesgo" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Exigible -->
+                        <div class="space-y-2">
+                            <label for="exigible" class="text-sm font-medium">EXIGIBLE</label>
+                            <input type="text" id="exigible" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Días Mora -->
+                        <div class="space-y-2">
+                            <label for="diasMora" class="text-sm font-medium">DÍAS MORA</label>
+                            <input type="text" id="diasMora" class="border p-2 rounded w-full" readonly />
+                        </div>
+                    </div>
+                </div>
 
-      <div class="form-group">
-        <label for="identificacionCliente">Identificación Cliente:</label>
-        <input type="text" id="identificacionCliente" readonly aria-readonly="true">
-      </div>
+                <!-- Antecedentes -->
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold flex items-center mb-2">
+                        <i class="lucide-file-text mr-2"></i>ANTECEDENTES
+                    </h3>
+                    <div class="space-y-2">
+                        <label for="resumen" class="text-sm font-medium">RESUMEN</label>
+                        <textarea id="resumen" class="border p-2 rounded w-full min-h-[100px]" readonly></textarea>
+                    </div>
+                </div>
 
-      <div class="form-group">
-        <label for="operación">Operación:</label>
-        <input type="text" id="operación" disabled>
-      </div>
+                <!-- Resultado de la Gestión -->
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold flex items-center mb-2">
+                        <i class="lucide-clock mr-2"></i>RESULTADO DE LA GESTIÓN
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Tipo de Contacto -->
+                        <div class="space-y-2">
+                            <label for="tipoContacto" class="text-sm font-medium">TIPO DE CONTACTO</label>
+                            <input type="text" id="tipoContacto" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Respuesta de Contacto -->
+                        <div class="space-y-2">
+                            <label for="respuestaContacto" class="text-sm font-medium">RESPUESTA DE CONTACTO</label>
+                            <input type="text" id="respuestaContacto" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Motivo de No Pago -->
+                        <div class="space-y-2">
+                            <label for="motivoNoPago" class="text-sm font-medium">MOTIVO DE NO PAGO</label>
+                            <input type="text" id="motivoNoPago" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Observación -->
+                        <div class="space-y-2 col-span-2">
+                            <label for="observacion" class="text-sm font-medium">OBSERVACIÓN</label>
+                            <textarea id="observacion" class="border p-2 rounded w-full min-h-[100px]" readonly></textarea>
+                        </div>
+                    </div>
+                </div>
 
-      <div class="form-group">
-        <label for="codigoProveedorGestion">Código Proveedor Gestión:</label>
-        <input type="text" id="codigoProveedorGestion" disabled>
-      </div>
+                <!-- Promesa de Pago -->
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold flex items-center mb-2">
+                        <i class="lucide-dollar-sign mr-2"></i>PROMESA DE PAGO
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Fecha Compromiso/Pago -->
+                        <div class="space-y-2">
+                            <label for="fechaCompromisoPago" class="text-sm font-medium">FECHA COMPROMISO/PAGO</label>
+                            <input type="date" id="fechaCompromisoPago" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Valor -->
+                        <div class="space-y-2">
+                            <label for="valor" class="text-sm font-medium">VALOR</label>
+                            <input type="text" id="valor" class="border p-2 rounded w-full" readonly />
+                        </div>
+                        <!-- Teléfono Nuevo -->
+                        <div class="space-y-2">
+                            <label for="telefonoNuevo" class="text-sm font-medium">TELÉFONO NUEVO</label>
+                            <input type="text" id="telefonoNuevo" class="border p-2 rounded w-full" readonly />
+                        </div>
+                    </div>
+                </div>
 
-      <div class="form-group">
-        <label for="codigoNodoGestion">Código Nodo Gestión:</label>
-        <input type="text" id="codigoNodoGestion" disabled>
-      </div>
+                <!-- Información Adicional -->
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold flex items-center mb-2">
+                        <i class="lucide-info mr-2"></i>INFORMACIÓN ADICIONAL
+                    </h3>
+                    <div class="space-y-2">
+                        <label for="additionalInfo" class="text-sm font-medium">Información Adicional:</label>
+                        <textarea id="additionalInfo" class="border p-2 rounded w-full min-h-[100px]"></textarea>
+                    </div>
+                </div>
 
-      <div class="form-group">
-        <label for="identificacionPersonaGestionada">Identificación Persona Gestionada:</label>
-        <input type="text" id="identificacionPersonaGestionada" disabled>
-      </div>
+                <!-- Foto de Respaldo -->
+                <div class="bg-gray-50 p-4 rounded-lg shadow">
+                    <h3 class="text-lg font-semibold flex items-center mb-2">
+                        <i class="lucide-camera mr-2"></i>FOTO DE RESPALDO
+                    </h3>
+                    <div class="space-y-2">
+                        <input id="photoUpload" type="file" accept="image/*" class="border p-2 rounded w-full" />
+                        <div id="photoPreviewContainer" class="mt-4 flex justify-center">
+                            <img id="photo" src="" alt="Foto de respaldo" class="rounded-md max-w-[300px] hidden" />
+                        </div>
+                    </div>
+                </div>
 
-      <div class="form-group">
-        <label for="fechaGestionSistemaGestion">Fecha Gestión Sistema:</label>
-        <input type="text" id="fechaGestionSistemaGestion" disabled>
-      </div>
+                <!-- Botones de navegación entre duplicados -->
+                <div class="flex space-x-4 mt-6">
+                    <button type="button" id="prevClient" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center" disabled>
+                        <i class="lucide-arrow-left mr-2"></i>Anterior
+                    </button>
+                    <button type="button" id="nextClient" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded flex items-center" disabled>
+                        Siguiente<i class="lucide-arrow-right ml-2"></i>
+                    </button>
+                    <button type="button" id="clearFormButton" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded flex items-center">
+                        <i class="lucide-trash mr-2"></i>Limpiar Formulario
+                    </button>
+                </div>
+            </form>
 
-      <div class="form-group">
-        <label for="agendamiento_prox_visita">Agendamiento Próxima Visita:</label>
-        <input type="text" id="agendamiento_prox_visita" disabled>
-      </div>
+            <!-- Botones de acción (Siempre visibles) -->
+            <div class="flex space-x-4 mt-6 p-6 bg-gray-50 rounded-lg shadow">
+                <button type="button" id="downloadJsonButton" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded flex items-center">
+                    <i class="lucide-download mr-2"></i>Guardar JSON
+                </button>
+                <button type="button" id="downloadStaticHtmlButton" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded flex items-center">
+                    <i class="lucide-file-text mr-2"></i>Generar HTML Estático
+                </button>
+            </div>
+        </main>
 
-      <div class="form-group">
-        <label for="tipoUbicacion">Tipo de Ubicación:</label>
-        <input type="text" id="tipoUbicacion" disabled>
-      </div>
-
-      <div class="form-group">
-        <label for="pais">País:</label>
-        <input type="text" id="pais" disabled>
-      </div>
-
-      <div class="form-group">
-        <label for="codigo_provincia">Código Provincia:</label>
-        <input type="text" id="codigo_provincia" disabled>
-      </div>
-
-      <div class="form-group">
-        <label for="provincia">Provincia:</label>
-        <input type="text" id="provincia" disabled>
-      </div>
-
-      <div class="form-group">
-        <label for="canton">Cantón:</label>
-        <input type="text" id="canton" disabled>
-      </div>
-
-      <div class="form-group">
-        <label for="ciudad">Ciudad:</label>
-        <input type="text" id="ciudad" disabled>
-      </div>
-
-      <div class="form-group">
-        <label for="parroquia">Parroquia:</label>
-        <input type="text" id="parroquia" disabled>
-      </div>
-
-      <div class="form-group">
-        <label for="direccionCompleta">Dirección Completa:</label>
-        <textarea id="direccionCompleta" rows="3" readonly aria-readonly="true"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="additionalInfo">Información Adicional:</label>
-        <textarea id="additionalInfo" rows="3"></textarea>
-      </div>
-
-      <div class="form-group">
-        <label for="photoUpload">Subir Foto:</label>
-        <input type="file" id="photoUpload" accept="image/*">
-        <img id="photo" class="photo-preview" alt="Foto del cliente" style="display: none;">
-      </div>
-    </form>
-
-    <div class="form-navigation">
-      <button type="button" id="prevClient">Anterior</button>
-      <button type="button" id="nextClient">Siguiente</button>
+        <!-- Contenedor de mensajes -->
+        <div id="messageContainer" class="fixed bottom-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-md hidden"></div>
     </div>
 
-    <!-- Búsqueda de cliente -->
-    <div id="searchContainer" class="search-container">
-      <label for="searchInput">Buscar por ID Cliente:</label>
-      <input type="text" id="searchInput" placeholder="Ingrese ID del cliente">
-      <button type="button" id="searchButton">Buscar</button>
-    </div>
-
-    <!-- Botones de acción -->
-    <div class="action-buttons">
-      <button type="button" id="downloadStaticHtmlButton">Generar HTML Estático</button>
-      <button type="button" id="downloadJsonButton">Guardar JSON</button>
-    </div>
-  </div>
-
-  <script src="script.js?v=1.0"></script>
+    <!-- Scripts -->
+    <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
