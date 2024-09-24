@@ -548,7 +548,6 @@ function updateFilePath() {
         console.log("Ruta de archivo actualizada:", currentFilePath);
     }
 }
-
 // **23. Función para Generar HTML Estático Mejorado**
 function generateStaticHtml() {
     console.log("Generando HTML estático para todos los clientes...");
@@ -565,164 +564,223 @@ function generateStaticHtml() {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Informe de Visitas Gestión Terrena</title>
-                <!-- Bootstrap CSS -->
-                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-                <!-- Google Fonts -->
-                <link rel="preconnect" href="https://fonts.googleapis.com">
-                <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-                <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+                <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
                 <style>
-                    body {
-                        font-family: 'Roboto', sans-serif;
-                        background-color: #f8f9fa;
+                    @media print {
+                        .print\:shadow-none {
+                            box-shadow: none !important;
+                        }
+                        .page-break {
+                            page-break-after: always;
+                        }
+                    }
+                    /* Estilos personalizados para las imágenes */
+                    .photo-container {
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        margin-top: 20px;
+                    }
+                    .photo {
+                        max-width: 90%;
+                        max-height: 400px;
+                        object-fit: contain;
+                        border-radius: 10px;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                    }
+                    .image-caption {
+                        text-align: center;
+                        margin-top: 10px;
+                        font-size: 0.875rem;
+                        color: #6b7280; /* Color gris de Tailwind */
+                    }
+                    /* Paginación de clientes */
+                    .client-section {
+                        margin-bottom: 40px;
+                        page-break-inside: avoid;
+                    }
+                    .client-page {
+                        padding: 20px;
+                        border: 1px solid #e2e8f0;
+                        background-color: #fff;
+                        border-radius: 10px;
+                        margin-bottom: 40px;
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                        page-break-after: always;
                     }
                     .container {
                         margin-top: 20px;
                         margin-bottom: 20px;
                     }
-                    .client-section {
-                        margin-bottom: 40px;
-                        page-break-inside: avoid;
+                    /* Sombra y bordes para contenedores */
+                    .rounded-lg {
+                        border-radius: 10px;
                     }
-                    .section-title {
-                        font-size: 1.5rem;
-                        font-weight: 700;
-                        color: #343a40;
-                        margin-bottom: 20px;
-                        border-bottom: 2px solid #dee2e6;
-                        padding-bottom: 10px;
-                    }
-                    .section {
-                        background-color: #ffffff;
-                        border: 1px solid #dee2e6;
-                        border-radius: 8px;
-                        padding: 20px;
-                        margin-bottom: 20px;
-                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-                    }
-                    .field-label {
-                        font-weight: 500;
-                        color: #495057;
-                    }
-                    .field-value {
-                        font-weight: 400;
-                        color: #212529;
-                    }
-                    .photo {
-                        max-width: 100%;
-                        height: auto;
-                        border-radius: 8px;
-                        margin-top: 10px;
-                    }
-                    @media print {
-                        body {
-                            background-color: white;
-                        }
-                        .container {
-                            margin: 0;
-                            padding: 0;
-                        }
-                        .client-section {
-                            page-break-after: always;
-                        }
-                        .no-print {
-                            display: none;
-                        }
+                    .shadow-md {
+                        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
                     }
                 </style>
+                <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lucide-static@0.263.1/font/lucide.min.css">
             </head>
-            <body>
-                <div class="container">
-                    <header class="mb-5 text-center">
-                        <h1 class="display-4">Informe de Visitas Gestión Terrena</h1>
-                        <p class="lead">Fecha de generación: ${new Date().toLocaleDateString('es-ES')}</p>
+            <body class="bg-gray-100">
+                <div class="container mx-auto max-w-5xl bg-white rounded-lg shadow-md p-6">
+                    <header class="border-b pb-6 mb-6">
+                        <h2 class="text-3xl font-bold text-center flex items-center justify-center">
+                            <i class="lucide-users mr-2"></i>INFORME DE VISITAS GESTIÓN TERRENA
+                        </h2>
+                        <p class="text-center text-gray-600">Fecha de generación: ${new Date().toLocaleDateString('es-ES')}</p>
                     </header>
+
                     ${clients.map((client, index) => `
-                        <section class="client-section">
-                            <h2 class="section-title">Cliente #${index + 1}: ${sanitizeInput(client.nombreCliente) || 'N/A'}</h2>
-
-                            <!-- DATOS CLIENTE -->
-                            <div class="section">
-                                <h3 class="h5 mb-4">Datos del Cliente</h3>
-                                <div class="row">
-                                    ${generateField('Nombre Cliente', client.nombreCliente)}
-                                    <!-- ${generateField('Identificación', client.identificacionCliente)} -->
-                                    ${generateField('Operación', client.operacion)}
-                                    ${generateField('Producto', client.producto)}
-                                    ${generateField('Teléfono del Cliente', client.telefonoCliente)}
-                                    ${generateField('Dirección de la Visita', client.direccionVisita, true)}
-                                    ${generateField('Tipo de Dirección de Visita', client.tipoDireccionVisita, true)}
-                                    ${generateField('Fecha y Hora de Visita', formatDate(client.fechaHoraVisita))}
-                                    ${generateField('Nombre del Gestor', client.nombreGestor)}
-                                    ${generateField('Latitud', client.latitud)}
-                                    ${generateField('Longitud', client.longitud)}
+                        <div class="client-page">
+                            <section>
+                                <h3 class="text-lg font-semibold flex items-center mb-2">
+                                    <i class="lucide-user mr-2"></i>DATOS CLIENTE
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">NOMBRE CLIENTE</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.nombreCliente)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">OPERACIÓN</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.operacion)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">PRODUCTO</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.producto)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">TELÉFONO DEL CLIENTE</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.telefonoCliente)}</p>
+                                    </div>
+                                    <div class="space-y-2 col-span-2">
+                                        <label class="text-sm font-medium">DIRECCIÓN DE VISITA</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.direccionVisita)}</p>
+                                    </div>
+                                    <div class="space-y-2 col-span-2">
+                                        <label class="text-sm font-medium">TIPO DE DIRECCIÓN DE VISITA</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.tipoDireccionVisita)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">FECHA Y HORA DE VISITA</label>
+                                        <p class="border p-2 rounded w-full">${formatDate(client.fechaHoraVisita)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">NOMBRE DEL GESTOR</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.nombreGestor)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">LATITUD</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.latitud)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">LONGITUD</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.longitud)}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            </section>
 
-                            <!-- ESTADO DE VISITA -->
-                            <div class="section">
-                                <h3 class="h5 mb-4">Estado de Visita</h3>
-                                ${generateField('Fecha y Hora Próxima Visita', formatDate(client.agendamiento))}
-                            </div>
-
-                            <!-- GESTIÓN DOMICILIARIA -->
-                            <div class="section">
-                                <h3 class="h5 mb-4">Gestión Domiciliaria</h3>
-                                <div class="row">
-                                    ${generateField('Riesgo', client.riesgo)}
-                                    ${generateField('Exigible', client.exigible)}
-                                    ${generateField('Días Mora', client.diasMora)}
+                            <section>
+                                <h3 class="text-lg font-semibold flex items-center mb-2">
+                                    <i class="lucide-calendar mr-2"></i>ESTADO DE VISITA
+                                </h3>
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium">FECHA Y HORA PRÓXIMA VISITA</label>
+                                    <p class="border p-2 rounded w-full">${formatDate(client.agendamiento)}</p>
                                 </div>
-                            </div>
+                            </section>
 
-                            <!-- ANTECEDENTES -->
-                            <div class="section">
-                                <h3 class="h5 mb-4">Antecedentes</h3>
-                                ${generateField('Resumen', client.resumen, true)}
-                            </div>
-
-                            <!-- RESULTADO DE LA GESTIÓN -->
-                            <div class="section">
-                                <h3 class="h5 mb-4">Resultado de la Gestión</h3>
-                                <div class="row">
-                                    ${generateField('Tipo de Contacto', client.tipoContacto)}
-                                    ${generateField('Respuesta de Contacto', client.respuestaContacto)}
-                                    ${generateField('Motivo de No Pago', client.motivoNoPago)}
-                                    ${generateField('Observación', client.observacion, true)}
+                            <section>
+                                <h3 class="text-lg font-semibold flex items-center mb-2">
+                                    <i class="lucide-briefcase mr-2"></i>GESTIÓN DOMICILIARIA
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">PRODUCTO</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.producto)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">RIESGO</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.riesgo)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">EXIGIBLE</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.exigible)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">DÍAS MORA</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.diasMora)}</p>
+                                    </div>
                                 </div>
-                            </div>
+                            </section>
 
-                            <!-- PROMESA DE PAGO -->
-                            <div class="section">
-                                <h3 class="h5 mb-4">Promesa de Pago</h3>
-                                <div class="row">
-                                    ${generateField('Fecha Compromiso/Pago', formatDate(client.fechaCompromisoPago))}
-                                    ${generateField('Valor', client.valor)}
-                                    ${generateField('Teléfono Nuevo', client.telefonoNuevo)}
+                            <section>
+                                <h3 class="text-lg font-semibold flex items-center mb-2">
+                                    <i class="lucide-file-text mr-2"></i>ANTECEDENTES
+                                </h3>
+                                <div class="space-y-2">
+                                    <label class="text-sm font-medium">RESUMEN</label>
+                                    <p class="border p-2 rounded w-full">${sanitizeInput(client.resumen)}</p>
                                 </div>
-                            </div>
+                            </section>
 
-                            <!-- INFORMACIÓN ADICIONAL -->
-                            <div class="section">
-                                <h3 class="h5 mb-4">Información Adicional</h3>
-                                ${generateField('', client.additionalInfo, true)}
-                            </div>
+                            <section>
+                                <h3 class="text-lg font-semibold flex items-center mb-2">
+                                    <i class="lucide-clock mr-2"></i>RESULTADO DE LA GESTIÓN
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">TIPO DE CONTACTO</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.tipoContacto)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">RESPUESTA DE CONTACTO</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.respuestaContacto)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">MOTIVO DE NO PAGO</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.motivoNoPago)}</p>
+                                    </div>
+                                    <div class="space-y-2 col-span-2">
+                                        <label class="text-sm font-medium">OBSERVACIÓN</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.observacion)}</p>
+                                    </div>
+                                </div>
+                            </section>
 
-                            <!-- FOTO DE RESPALDO -->
-                            <div class="section">
-                                <h3 class="h5 mb-4">Foto de Respaldo</h3>
-                                <div>
+                            <section>
+                                <h3 class="text-lg font-semibold flex items-center mb-2">
+                                    <i class="lucide-dollar-sign mr-2"></i>PROMESA DE PAGO
+                                </h3>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">FECHA COMPROMISO/PAGO</label>
+                                        <p class="border p-2 rounded w-full">${formatDate(client.fechaCompromisoPago)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">VALOR</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.valor)}</p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-medium">TELÉFONO NUEVO</label>
+                                        <p class="border p-2 rounded w-full">${sanitizeInput(client.telefonoNuevo)}</p>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section>
+                                <h3 class="text-lg font-semibold flex items-center mb-2">
+                                    <i class="lucide-camera mr-2"></i>FOTO DE RESPALDO
+                                </h3>
+                                <div class="photo-container">
                                     ${getClientPhotoHtml(client)}
                                 </div>
-                            </div>
-                        </section>
+                                <p class="image-caption">Foto proporcionada por el cliente</p>
+                            </section>
+                        </div>
                     `).join('')}
-                    <div class="text-center no-print">
-                        <button onclick="window.print()" class="btn btn-primary mt-4">Imprimir Informe</button>
-                    </div>
                 </div>
-                <!-- Bootstrap JS (Opcional si necesitas funcionalidades JS de Bootstrap) -->
-                <!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script> -->
             </body>
             </html>
         `;
@@ -736,30 +794,18 @@ function generateStaticHtml() {
         document.body.removeChild(downloadLink);
         URL.revokeObjectURL(downloadLink.href);
     }).catch(error => {
-        console.error("Error al generar el HTML estático:", error);
         alert("Error al generar el HTML estático. Por favor, inténtalo de nuevo.");
     });
 }
 
-// Función para generar campos en el HTML
-function generateField(label, value, fullWidth = false) {
-    return `
-        <div class="${fullWidth ? 'col-12' : 'col-md-6'} mb-3">
-            ${label ? `<p class="field-label mb-1">${label}</p>` : ''}
-            <p class="field-value">${sanitizeInput(value) || 'N/A'}</p>
-        </div>
-    `;
-}
-
-// Función para obtener el HTML de la foto del cliente
+// Función para obtener la foto del cliente
 function getClientPhotoHtml(client) {
     if (client.photo) {
-        return `<img src="${client.photo}" alt="Foto del cliente" class="photo img-fluid">`;
+        return `<img src="${sanitizeInput(client.photo)}" alt="Foto del cliente" class="photo"/>`;
     } else if (client.urlWeb) {
         const urlWeb = client.urlWeb.trim();
-        console.log("Cargando imagen desde URL WEB en HTML estático:", urlWeb);
         if (isValidUrl(urlWeb)) {
-            return `<img src="${urlWeb}" alt="Foto del cliente desde URL WEB" class="photo img-fluid">`;
+            return `<img src="${sanitizeInput(urlWeb)}" alt="Foto del cliente desde URL WEB" class="photo"/>`;
         } else {
             return '<p>URL WEB no es válida.</p>';
         }
@@ -768,16 +814,15 @@ function getClientPhotoHtml(client) {
     }
 }
 
-// Función para validar si una cadena es una URL válida
-function isValidUrl(string) {
+// Función para validar URL
+function isValidUrl(url) {
     try {
-        new URL(string);
+        new URL(url);
         return true;
-    } catch (_) {
-        return false;  
+    } catch (e) {
+        return false;
     }
 }
-
 // **24. Función para Limpiar el Formulario**
 function clearForm() {
     console.log("Limpiando formulario...");
