@@ -118,12 +118,15 @@ async function handlePhotoUpload(event) {
     const file = event.target.files[0];
     if (file && file.type.startsWith("image/")) {
         try {
-            const compressedFile = await compressImage(file);
-            if (!compressedFile) {
-                alert("Error al comprimir la imagen. Por favor, inténtalo de nuevo.");
-                return;
+            // Opciones de compresión
+            const options = {
+                maxSizeMB: 1,
+                maxWidthOrHeight: 1024,
+                useWebWorker: true
             }
 
+            const compressedFile = await imageCompression(file, options);
+            
             const reader = new FileReader();
             reader.onload = async function (e) {
                 const base64Image = e.target.result;
@@ -131,19 +134,21 @@ async function handlePhotoUpload(event) {
                     foundClients[currentDuplicateIndex].photo = base64Image;
                     updatePhotoPreview(foundClients[currentDuplicateIndex]);
                     await saveClientToIndexedDB(foundClients[currentDuplicateIndex]);
+                    showMessage("Foto cargada y comprimida con éxito", "success");
                 } else {
-                    alert("No hay cliente seleccionado para agregar la foto.");
+                    showMessage("No hay cliente seleccionado para agregar la foto.", "error");
                 }
             };
             reader.onerror = function () {
-                alert("Error al cargar la imagen. Por favor, inténtalo de nuevo.");
+                showMessage("Error al cargar la imagen. Por favor, inténtalo de nuevo.", "error");
             };
             reader.readAsDataURL(compressedFile);
         } catch (error) {
-            alert("Error al procesar la imagen. Por favor, inténtalo de nuevo.");
+            console.error("Error al comprimir la imagen:", error);
+            showMessage("Error al procesar la imagen. Por favor, inténtalo de nuevo.", "error");
         }
     } else {
-        alert("Selecciona un archivo de imagen válido.");
+        showMessage("Selecciona un archivo de imagen válido.", "warning");
     }
 }
 
@@ -270,7 +275,11 @@ async function showClient(client) {
         }
     });
 
-    updatePhotoPreview(client); // Pasar el objeto cliente completo
+    // Asegurarse de que latitud y longitud se actualicen correctamente
+    document.getElementById("latitud").value = client.latitud || "";
+    document.getElementById("longitud").value = client.longitud || "";
+
+    updatePhotoPreview(client);
 
     updateNavigationButtons();
 }
@@ -287,52 +296,141 @@ function cleanupPhotoPreview() {
 // **12. Función para Actualizar la Vista Previa de la Foto**
 function updatePhotoPreview(client) {
     const photoPreview = document.getElementById("photo");
+    const photoContainer = document.getElementById("photoPreviewContainer");
 
-    if (!photoPreview) {
-        console.error("Error: No se encontró el elemento con id 'photo'");
+    if (!photoPreview || !photoContainer) {
+        console.error("Error: No se encontraron los elementos de vista previa de la foto");
         return;
     }
 
     cleanupPhotoPreview();
 
     if (client.photo) {
-        try {
-            photoPreview.src = client.photo;
-            photoPreview.style.display = "block";
-            photoPreview.alt = "Foto del cliente";
+        // Crear una versión de baja resolución
+        const lowResImage = document.createElement('img');
+        lowResImage.src = client.photo;
+        lowResImage.classList.add('blur-sm', 'w-full', 'h-full', 'object-cover');
+        photoContainer.appendChild(lowResImage);
+
+        // Cargar la imagen de alta resolución
+        const highResImage = new Image();
+        highResImage.onload = function() {
+            lowResImage.remove();
+            photoPreview.src = this.src;
             photoPreview.classList.remove('hidden');
-        } catch (error) {
-            console.error("Error al cargar la imagen del cliente:", error);
-            photoPreview.src = "https://via.placeholder.com/150?text=Error+de+imagen";
-            photoPreview.style.display = "block";
-            photoPreview.alt = "Error al cargar la imagen";
-            photoPreview.classList.remove('hidden');
-        }
+            photoPreview.classList.add('w-full', 'h-full', 'object-cover');
+        };
+        highResImage.src = client.photo;
     } else if (client.urlWeb) {
         const urlWeb = client.urlWeb.trim();
-        console.log("Intentando cargar la imagen desde URL WEB:", urlWeb);
-
         if (isValidUrl(urlWeb)) {
             photoPreview.src = urlWeb;
-            photoPreview.style.display = "block";
-            photoPreview.alt = "Foto del cliente desde URL WEB";
             photoPreview.classList.remove('hidden');
         } else {
-            console.warn("URL WEB no es una URL válida:", urlWeb);
             photoPreview.src = "https://via.placeholder.com/150?text=URL+no+válida";
-            photoPreview.style.display = "block";
-            photoPreview.alt = "URL WEB no válida";
             photoPreview.classList.remove('hidden');
         }
     } else {
         photoPreview.src = "https://via.placeholder.com/150?text=Sin+imagen";
-        photoPreview.style.display = "block";
-        photoPreview.alt = "No hay imagen disponible";
         photoPreview.classList.remove('hidden');
     }
 }
+// **OTRAS FUNCIONES DE VALIDACIÓN Y FORMATEO**
+// **Función para mostrar mensajes**
+function showMessage(message, type = 'info', duration = 3000) {
+    const messageContainer = document.getElementById('messageContainer');
+    if (!messageContainer) {
+        console.error('El contenedor de mensajes no existe en el DOM');
+        return;
+    }
 
-// Función para validar si una cadena es una URL válida
+    // Limpiar mensajes anteriores
+    messageContainer.innerHTML = '';
+
+    // Crear el elemento del mensaje
+    const messageElement = document.createElement('div');
+    messageElement.textContent = message;
+    messageElement.className = 'px-4 py-2 rounded shadow-md text-white';
+
+    // Establecer el color de fondo según el tipo de mensaje
+    switch (type) {
+        case 'success':
+            messageElement.classList.add('bg-green-500');
+            break;
+        case 'error':
+            messageElement.classList.add('bg-red-500');
+            break;
+        case 'warning':
+            messageElement.classList.add('bg-yellow-500');
+            break;
+        default:
+            messageElement.classList.add('bg-blue-500');
+    }
+
+    // Añadir el mensaje al contenedor
+    messageContainer.appendChild(messageElement);
+    messageContainer.classList.remove('hidden');
+
+    // Remover el mensaje después de la duración especificada
+    setTimeout(() => {
+        messageElement.remove();
+        if (messageContainer.children.length === 0) {
+            messageContainer.classList.add('hidden');
+        }
+    }, duration);
+}
+
+function isValidCoordinate(value, type) {
+    // Eliminar espacios en blanco y reemplazar comas por puntos
+    value = value.trim().replace(',', '.');
+    
+    // Expresión regular para validar el formato
+    const regex = /^-?\d+(\.\d+)?$/;
+    
+    if (!regex.test(value)) {
+        return false;
+    }
+    
+    // Convertir a número
+    const num = parseFloat(value);
+    
+    // Verificar si es un número válido y está en el rango correcto
+    if (isNaN(num)) {
+        return false;
+    }
+    
+    if (type === 'latitud') {
+        return num >= -90 && num <= 90;
+    } else if (type === 'longitud') {
+        return num >= -180 && num <= 180;
+    }
+    
+    return false;
+}
+
+function validateLatitud(event) {
+    const value = event.target.value;
+    if (value === "" || isValidCoordinate(value, 'latitud')) {
+        event.target.classList.remove('border-red-500');
+        event.target.classList.add('border-green-500');
+    } else {
+        event.target.classList.remove('border-green-500');
+        event.target.classList.add('border-red-500');
+    }
+}
+
+function validateLongitud(event) {
+    const value = event.target.value;
+    if (value === "" || isValidCoordinate(value, 'longitud')) {
+        event.target.classList.remove('border-red-500');
+        event.target.classList.add('border-green-500');
+    } else {
+        event.target.classList.remove('border-green-500');
+        event.target.classList.add('border-red-500');
+    }
+}
+
+// **Función para validar si una cadena es una URL válida**
 function isValidUrl(string) {
     try {
         new URL(string);
@@ -342,13 +440,45 @@ function isValidUrl(string) {
     }
 }
 
-// **13. Función para Guardar Información Adicional**
+// **13. Funciones para Guardar Información Adicional, latitud y longitud**
 async function saveAdditionalInfo(event) {
     if (foundClients.length > 0) {
         foundClients[currentDuplicateIndex].additionalInfo = event.target.value;
         await saveClientToIndexedDB(foundClients[currentDuplicateIndex]);
     } else {
         alert("No hay cliente seleccionado para guardar información adicional.");
+    }
+}
+
+async function saveLatitud(event) {
+    const value = event.target.value;
+    if (isValidCoordinate(value, 'latitud')) {
+        if (foundClients.length > 0) {
+            foundClients[currentDuplicateIndex].latitud = value;
+            await saveClientToIndexedDB(foundClients[currentDuplicateIndex]);
+            showMessage("Latitud guardada correctamente", "success");
+        } else {
+            showMessage("No hay cliente seleccionado para guardar latitud.", "error");
+        }
+    } else {
+        showMessage("Latitud inválida. Debe ser un número entre -90 y 90, sin caracteres adicionales.", "error");
+        event.target.value = foundClients[currentDuplicateIndex].latitud || "";
+    }
+}
+
+async function saveLongitud(event) {
+    const value = event.target.value;
+    if (isValidCoordinate(value, 'longitud')) {
+        if (foundClients.length > 0) {
+            foundClients[currentDuplicateIndex].longitud = value;
+            await saveClientToIndexedDB(foundClients[currentDuplicateIndex]);
+            showMessage("Longitud guardada correctamente", "success");
+        } else {
+            showMessage("No hay cliente seleccionado para guardar longitud.", "error");
+        }
+    } else {
+        showMessage("Longitud inválida. Debe ser un número entre -180 y 180, sin caracteres adicionales.", "error");
+        event.target.value = foundClients[currentDuplicateIndex].longitud || "";
     }
 }
 
@@ -495,7 +625,8 @@ function processData(data, separator) {
     });
 
     if (parsedData.errors.length > 0) {
-        alert("Hubo errores al procesar el archivo. Por favor, verifica el formato.");
+        showMessage("Hubo errores al procesar el archivo. Por favor, verifica el formato.");
+        console.error("Errores al procesar el archivo:", parsedData.errors);
         return;
     }
 
@@ -511,8 +642,13 @@ function processData(data, separator) {
                 clientData[fieldName] = (row[header] || "").trim();
             }
         });
-        clientData.additionalInfo = "";
-        clientData.photo = null;
+
+        // Inicializar campos adicionales
+        clientData.additionalInfo = clientData.additionalInfo || "";
+        clientData.photo = clientData.photo || null;
+        clientData.latitud = clientData.latitud || "";
+        clientData.longitud = clientData.longitud || "";
+
         return clientData;
     });
 
@@ -523,8 +659,9 @@ function processData(data, separator) {
             searchContainer.classList.remove('hidden');
         }
         saveClientsToIndexedDB(clients);
+        showMessage(`Se han cargado ${clients.length} clientes con éxito.`);
     } else {
-        alert("No se encontraron datos válidos en el archivo.");
+        showMessage("No se encontraron datos válidos en el archivo.");
     }
 }
 
@@ -554,7 +691,7 @@ function generateStaticHtml() {
     console.log("Generando HTML estático para todos los clientes...");
     db.clients.toArray().then(clients => {
         if (clients.length === 0) {
-            alert("No hay clientes para generar el HTML. Por favor, carga algunos datos primero.");
+            showMessage("No hay clientes para generar el HTML. Por favor, carga algunos datos primero.", "warning");
             return;
         }
 
@@ -566,6 +703,7 @@ function generateStaticHtml() {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Informe de Visitas Gestión Terrena</title>
                 <script src="https://cdn.tailwindcss.com"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script>
                 <style>
                     @media print {
                         body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
@@ -678,9 +816,24 @@ function generateStaticHtml() {
                     </div>
                 `).join('')}
                 <script>
-                    window.onload = function() {
-                        window.print();
-                    }
+                    document.addEventListener("DOMContentLoaded", function() {
+                        var lazyImages = [].slice.call(document.querySelectorAll("img.lazyload"));
+                        if ("IntersectionObserver" in window) {
+                            let lazyImageObserver = new IntersectionObserver(function(entries, observer) {
+                                entries.forEach(function(entry) {
+                                    if (entry.isIntersecting) {
+                                        let lazyImage = entry.target;
+                                        lazyImage.src = lazyImage.dataset.src;
+                                        lazyImage.classList.remove("lazyload");
+                                        lazyImageObserver.unobserve(lazyImage);
+                                    }
+                                });
+                            });
+                            lazyImages.forEach(function(lazyImage) {
+                                lazyImageObserver.observe(lazyImage);
+                            });
+                        }
+                    });
                 </script>
             </body>
             </html>
@@ -694,9 +847,11 @@ function generateStaticHtml() {
         downloadLink.click();
         document.body.removeChild(downloadLink);
         URL.revokeObjectURL(downloadLink.href);
+
+        showMessage("HTML estático generado y descargado con éxito.", "success");
     }).catch(error => {
         console.error("Error al generar HTML estático:", error);
-        alert("Error al generar el HTML estático. Por favor, inténtalo de nuevo.");
+        showMessage("Error al generar el HTML estático. Por favor, inténtalo de nuevo.", "error");
     });
 }
 
@@ -708,14 +863,33 @@ function generateField(label, value, className = '') {
         </div>
     `;
 }
-
 function getClientPhotoHtml(client) {
+    const placeholderSrc = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24px' fill='%23333333'%3ECargando...%3C/text%3E%3C/svg%3E";
+
     if (client.photo) {
-        return `<img src="${sanitizeInput(client.photo)}" alt="Foto del cliente" class="max-w-full h-auto rounded-lg shadow-md"/>`;
+        return `
+            <div class="relative w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
+                <img src="${placeholderSrc}" 
+                     data-src="${sanitizeInput(client.photo)}" 
+                     alt="Foto del cliente" 
+                     class="lazyload absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0"
+                     onload="this.classList.remove('opacity-0')"
+                     onerror="this.src='https://via.placeholder.com/300x200?text=Error+de+imagen'; this.classList.remove('opacity-0')"
+                     loading="lazy" />
+            </div>`;
     } else if (client.urlWeb) {
         const urlWeb = client.urlWeb.trim();
         if (isValidUrl(urlWeb)) {
-            return `<img src="${sanitizeInput(urlWeb)}" alt="Foto del cliente desde URL WEB" class="max-w-full h-auto rounded-lg shadow-md"/>`;
+            return `
+                <div class="relative w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
+                    <img src="${placeholderSrc}" 
+                         data-src="${sanitizeInput(urlWeb)}" 
+                         alt="Foto del cliente desde URL WEB" 
+                         class="lazyload absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0"
+                         onload="this.classList.remove('opacity-0')"
+                         onerror="this.src='https://via.placeholder.com/300x200?text=Error+de+imagen'; this.classList.remove('opacity-0')"
+                         loading="lazy" />
+                </div>`;
         } else {
             return '<p class="text-red-500">URL WEB no es válida.</p>';
         }
@@ -724,25 +898,13 @@ function getClientPhotoHtml(client) {
     }
 }
 
-function isValidUrl(url) {
+function isValidUrl(string) {
     try {
-        new URL(url);
+        new URL(string);
         return true;
-    } catch (e) {
-        return false;
+    } catch (_) {
+        return false;  
     }
-}
-
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleString('es-ES', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
 }
 
 function sanitizeInput(input) {
@@ -755,6 +917,18 @@ function sanitizeInput(input) {
             case "'": return '&#39;';
             case '"': return '&quot;';
         }
+    });
+}
+
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString('es-ES', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
     });
 }
 // **24. Función para Limpiar el Formulario**
@@ -813,6 +987,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const additionalInfoInput = document.getElementById("additionalInfo");
     if (additionalInfoInput) {
         additionalInfoInput.addEventListener("input", saveAdditionalInfo);
+    }
+
+    const latitudInput = document.getElementById("latitud");
+    if (latitudInput) {
+        latitudInput.addEventListener("input", validateLatitud);
+        latitudInput.addEventListener("blur", saveLatitud);
+    }
+
+    const longitudInput = document.getElementById("longitud");
+    if (longitudInput) {
+        longitudInput.addEventListener("input", validateLongitud);
+        longitudInput.addEventListener("blur", saveLongitud);
     }
 
     const searchButton = document.getElementById("searchButton");

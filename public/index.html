@@ -127,11 +127,11 @@
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-2">
                                     <label for="latitud" class="text-sm font-medium">LATITUD</label>
-                                    <input type="text" id="latitud" class="border p-2 rounded w-full" readonly />
+                                    <input type="text" id="latitud" class="border p-2 rounded w-full" />
                                 </div>
                                 <div class="space-y-2">
                                     <label for="longitud" class="text-sm font-medium">LONGITUD</label>
-                                    <input type="text" id="longitud" class="border p-2 rounded w-full" readonly />
+                                    <input type="text" id="longitud" class="border p-2 rounded w-full" />
                                 </div>
                             </div>
                         </div>
@@ -256,7 +256,7 @@
                     <div class="space-y-2">
                         <input id="photoUpload" type="file" accept="image/*" class="border p-2 rounded w-full" />
                         <div id="photoPreviewContainer" class="mt-4 flex justify-center">
-                            <img id="photo" src="" alt="Foto de respaldo" class="rounded-md max-w-[300px] hidden" />
+                            <img id="photo" src="" alt="Foto de respaldo" class="rounded-md max-w-[300px] hidden" loading="lazy" />
                         </div>
                     </div>
                 </div>
@@ -292,6 +292,7 @@
 
     <!-- Scripts -->
     <script src="script.js"></script>
+    <div id="messageContainer" class="fixed bottom-4 right-4 z-50"></div>
 </body>
 </html>
 
