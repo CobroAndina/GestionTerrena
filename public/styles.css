@@ -234,3 +234,9 @@ h1 {
     margin-bottom: 10px;
   }
 }
+.lazyload {
+  transition: opacity 500ms ease-in-out;
+}
+.client-image {
+  transition: opacity 500ms ease-in-out;
+}

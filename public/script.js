@@ -687,13 +687,121 @@ function updateFilePath() {
 }
 
 // **23. Función para generar el HTML estático**
-function generateStaticHtml() {
+async function generateStaticHtml() {
     console.log("Generando HTML estático para todos los clientes...");
-    db.clients.toArray().then(clients => {
+    try {
+        const clients = await db.clients.toArray();
         if (clients.length === 0) {
             showMessage("No hay clientes para generar el HTML. Por favor, carga algunos datos primero.", "warning");
             return;
         }
+
+        const clientsHtml = await Promise.all(clients.map(async (client, index) => {
+            const photoHtml = await getClientPhotoHtml(client);
+            return `
+                <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden mb-8 page-break" data-client-id="${client.id || index}">
+                    <div class="px-6 py-4 bg-gray-200 border-b border-gray-300">
+                        <h1 class="text-2xl font-bold text-gray-800">INFORME DE VISITAS GESTIÓN TERRENA</h1>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div class="bg-gray-50 p-4 rounded-lg shadow">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                DATOS CLIENTE
+                            </h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                ${generateField('NOMBRE CLIENTE', client.nombreCliente)}
+                                ${generateField('OPERACIÓN', client.operacion)}
+                                ${generateField('PRODUCTO', client.producto)}
+                                ${generateField('TELEFONO DEL CLIENTE', client.telefonoCliente)}
+                                ${generateField('DIRECCIÓN DE LA VISITA', client.direccionVisita, 'col-span-2')}
+                                ${generateField('TIPO DE DIRECCIÓN DE VISITA', client.tipoDireccionVisita, 'col-span-2')}
+                                ${generateField('FECHA Y HORA DE VISITA', formatDate(client.fechaHoraVisita))}
+                                ${generateField('NOMBRE DEL GESTOR', client.nombreGestor)}
+                            </div>
+                            <div class="mt-4">
+                                <h3 class="font-semibold mb-2">GEOLOCALIZACIÓN DEL CLIENTE</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    ${generateField('LATITUD', client.latitud)}
+                                    ${generateField('LONGITUD', client.longitud)}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg shadow">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                ESTADO DE VISITA
+                            </h2>
+                            ${generateField('FECHA Y HORA PRÓXIMA VISITA', formatDate(client.agendamiento))}
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg shadow">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                                GESTIÓN DOMICILIARIA
+                            </h2>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                ${generateField('RIESGO', client.riesgo)}
+                                ${generateField('EXIGIBLE', client.exigible)}
+                                ${generateField('DIAS MORA', client.diasMora)}
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg shadow">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                ANTECEDENTES
+                            </h2>
+                            ${generateField('RESUMEN', client.resumen, 'col-span-2')}
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg shadow">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                                RESULTADO DE LA GESTIÓN
+                            </h2>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                ${generateField('TIPO DE CONTACTO', client.tipoContacto)}
+                                ${generateField('RESPUESTA DE CONTACTO', client.respuestaContacto)}
+                                ${generateField('MOTIVO DE NO PAGO', client.motivoNoPago)}
+                                ${generateField('OBSERVACIÓN', client.observacion, 'col-span-2')}
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg shadow">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                PROMESA DE PAGO
+                            </h2>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                ${generateField('FECHA COMPROMISO/PAGO', formatDate(client.fechaCompromisoPago))}
+                                ${generateField('VALOR', client.valor)}
+                                ${generateField('TELÉFONO NUEVO', client.telefonoNuevo)}
+                            </div>
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg shadow">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                INFORMACIÓN ADICIONAL
+                            </h2>
+                            ${generateField('', client.additionalInfo, 'col-span-2')}
+                        </div>
+
+                        <div class="bg-gray-50 p-4 rounded-lg shadow">
+                            <h2 class="text-xl font-semibold mb-4 flex items-center">
+                                <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                FOTO DE RESPALDO
+                            </h2>
+                            <div class="mt-2">
+                                ${photoHtml}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }));
 
         const staticHtmlContent = `
             <!DOCTYPE html>
@@ -703,137 +811,78 @@ function generateStaticHtml() {
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Informe de Visitas Gestión Terrena</title>
                 <script src="https://cdn.tailwindcss.com"></script>
-                <script src="https://cdnjs.cloudflare.com/ajax/libs/lazysizes/5.3.2/lazysizes.min.js" async></script>
                 <style>
                     @media print {
                         body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
                         .page-break { page-break-after: always; }
                     }
+                    .client-image {
+                        transition: opacity 500ms ease-in-out;
+                    }
                 </style>
             </head>
             <body class="bg-gray-100 p-8">
-                ${clients.map((client, index) => `
-                    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg overflow-hidden mb-8 page-break">
-                        <div class="px-6 py-4 bg-gray-200 border-b border-gray-300">
-                            <h1 class="text-2xl font-bold text-gray-800">INFORME DE VISITAS GESTIÓN TERRENA</h1>
-                        </div>
-                        <div class="p-6 space-y-6">
-                            <div class="bg-gray-50 p-4 rounded-lg shadow">
-                                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                    DATOS CLIENTE
-                                </h2>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    ${generateField('NOMBRE CLIENTE', client.nombreCliente)}
-                                    ${generateField('OPERACIÓN', client.operacion)}
-                                    ${generateField('PRODUCTO', client.producto)}
-                                    ${generateField('TELEFONO DEL CLIENTE', client.telefonoCliente)}
-                                    ${generateField('DIRECCIÓN DE LA VISITA', client.direccionVisita, 'col-span-2')}
-                                    ${generateField('TIPO DE DIRECCIÓN DE VISITA', client.tipoDireccionVisita, 'col-span-2')}
-                                    ${generateField('FECHA Y HORA DE VISITA', formatDate(client.fechaHoraVisita))}
-                                    ${generateField('NOMBRE DEL GESTOR', client.nombreGestor)}
-                                </div>
-                                <div class="mt-4">
-                                    <h3 class="font-semibold mb-2">GEOLOCALIZACIÓN DEL CLIENTE</h3>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        ${generateField('LATITUD', client.latitud)}
-                                        ${generateField('LONGITUD', client.longitud)}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="bg-gray-50 p-4 rounded-lg shadow">
-                                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    ESTADO DE VISITA
-                                </h2>
-                                ${generateField('FECHA Y HORA PRÓXIMA VISITA', formatDate(client.agendamiento))}
-                            </div>
-
-                            <div class="bg-gray-50 p-4 rounded-lg shadow">
-                                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-                                    GESTIÓN DOMICILIARIA
-                                </h2>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    ${generateField('RIESGO', client.riesgo)}
-                                    ${generateField('EXIGIBLE', client.exigible)}
-                                    ${generateField('DIAS MORA', client.diasMora)}
-                                </div>
-                            </div>
-
-                            <div class="bg-gray-50 p-4 rounded-lg shadow">
-                                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    ANTECEDENTES
-                                </h2>
-                                ${generateField('RESUMEN', client.resumen, 'col-span-2')}
-                            </div>
-
-                            <div class="bg-gray-50 p-4 rounded-lg shadow">
-                                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                                    RESULTADO DE LA GESTIÓN
-                                </h2>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    ${generateField('TIPO DE CONTACTO', client.tipoContacto)}
-                                    ${generateField('RESPUESTA DE CONTACTO', client.respuestaContacto)}
-                                    ${generateField('MOTIVO DE NO PAGO', client.motivoNoPago)}
-                                    ${generateField('OBSERVACIÓN', client.observacion, 'col-span-2')}
-                                </div>
-                            </div>
-
-                            <div class="bg-gray-50 p-4 rounded-lg shadow">
-                                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    PROMESA DE PAGO
-                                </h2>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    ${generateField('FECHA COMPROMISO/PAGO', formatDate(client.fechaCompromisoPago))}
-                                    ${generateField('VALOR', client.valor)}
-                                    ${generateField('TELÉFONO NUEVO', client.telefonoNuevo)}
-                                </div>
-                            </div>
-
-                            <div class="bg-gray-50 p-4 rounded-lg shadow">
-                                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    INFORMACIÓN ADICIONAL
-                                </h2>
-                                ${generateField('', client.additionalInfo, 'col-span-2')}
-                            </div>
-
-                            <div class="bg-gray-50 p-4 rounded-lg shadow">
-                                <h2 class="text-xl font-semibold mb-4 flex items-center">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                    FOTO DE RESPALDO
-                                </h2>
-                                <div class="mt-2">
-                                    ${getClientPhotoHtml(client)}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `).join('')}
+                ${clientsHtml.join('')}
                 <script>
-                    document.addEventListener("DOMContentLoaded", function() {
-                        var lazyImages = [].slice.call(document.querySelectorAll("img.lazyload"));
-                        if ("IntersectionObserver" in window) {
-                            let lazyImageObserver = new IntersectionObserver(function(entries, observer) {
-                                entries.forEach(function(entry) {
-                                    if (entry.isIntersecting) {
-                                        let lazyImage = entry.target;
-                                        lazyImage.src = lazyImage.dataset.src;
-                                        lazyImage.classList.remove("lazyload");
-                                        lazyImageObserver.unobserve(lazyImage);
-                                    }
-                                });
+                    async function createBlurredPlaceholder(imageSrc) {
+                        return new Promise((resolve) => {
+                            const img = new Image();
+                            img.crossOrigin = 'Anonymous';
+                            img.onload = () => {
+                                const canvas = document.createElement('canvas');
+                                const ctx = canvas.getContext('2d');
+                                canvas.width = 40;
+                                canvas.height = 30;
+                                ctx.filter = 'blur(4px)';
+                                ctx.drawImage(img, 0, 0, 40, 30);
+                                resolve(canvas.toDataURL('image/jpeg', 0.1));
+                            };
+                            img.onerror = () => resolve(null);
+                            img.src = imageSrc;
+                        });
+                    }
+
+                    function preloadImage(src) {
+                        return new Promise((resolve, reject) => {
+                            const img = new Image();
+                            img.onload = () => resolve(img);
+                            img.onerror = reject;
+                            img.src = src;
+                        });
+                    }
+
+                    function initImageHandling() {
+                        const imageObserver = new IntersectionObserver((entries, observer) => {
+                            entries.forEach(entry => {
+                                if (entry.isIntersecting) {
+                                    const img = entry.target;
+                                    img.src = img.dataset.src;
+                                    img.classList.remove('opacity-0');
+                                    img.onload = () => {
+                                        const clientId = img.closest('[data-client-id]')?.dataset.clientId;
+                                        if (clientId) {
+                                            localStorage.setItem(\`cachedImage_\${clientId}\`, img.src);
+                                        }
+                                    };
+                                    observer.unobserve(img);
+                                }
                             });
-                            lazyImages.forEach(function(lazyImage) {
-                                lazyImageObserver.observe(lazyImage);
+                        }, { rootMargin: '50px 0px', threshold: 0.01 });
+
+                        document.querySelectorAll('img.client-image').forEach(img => {
+                            imageObserver.observe(img);
+                        });
+
+                        const criticalImages = Array.from(document.querySelectorAll('img.client-image')).slice(0, 5);
+                        criticalImages.forEach(img => {
+                            preloadImage(img.dataset.src).then(() => {
+                                img.src = img.dataset.src;
+                                img.classList.remove('opacity-0');
                             });
-                        }
-                    });
+                        });
+                    }
+
+                    document.addEventListener('DOMContentLoaded', initImageHandling);
                 </script>
             </body>
             </html>
@@ -849,10 +898,10 @@ function generateStaticHtml() {
         URL.revokeObjectURL(downloadLink.href);
 
         showMessage("HTML estático generado y descargado con éxito.", "success");
-    }).catch(error => {
+    } catch (error) {
         console.error("Error al generar HTML estático:", error);
         showMessage("Error al generar el HTML estático. Por favor, inténtalo de nuevo.", "error");
-    });
+    }
 }
 
 function generateField(label, value, className = '') {
@@ -862,40 +911,6 @@ function generateField(label, value, className = '') {
             <p class="mt-1 p-2 w-full border border-gray-300 rounded-md bg-gray-50">${sanitizeInput(value) || 'N/A'}</p>
         </div>
     `;
-}
-function getClientPhotoHtml(client) {
-    const placeholderSrc = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24px' fill='%23333333'%3ECargando...%3C/text%3E%3C/svg%3E";
-
-    if (client.photo) {
-        return `
-            <div class="relative w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
-                <img src="${placeholderSrc}" 
-                     data-src="${sanitizeInput(client.photo)}" 
-                     alt="Foto del cliente" 
-                     class="lazyload absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0"
-                     onload="this.classList.remove('opacity-0')"
-                     onerror="this.src='https://via.placeholder.com/300x200?text=Error+de+imagen'; this.classList.remove('opacity-0')"
-                     loading="lazy" />
-            </div>`;
-    } else if (client.urlWeb) {
-        const urlWeb = client.urlWeb.trim();
-        if (isValidUrl(urlWeb)) {
-            return `
-                <div class="relative w-full h-64 bg-gray-200 rounded-lg overflow-hidden">
-                    <img src="${placeholderSrc}" 
-                         data-src="${sanitizeInput(urlWeb)}" 
-                         alt="Foto del cliente desde URL WEB" 
-                         class="lazyload absolute inset-0 w-full h-full object-cover transition-opacity duration-300 opacity-0"
-                         onload="this.classList.remove('opacity-0')"
-                         onerror="this.src='https://via.placeholder.com/300x200?text=Error+de+imagen'; this.classList.remove('opacity-0')"
-                         loading="lazy" />
-                </div>`;
-        } else {
-            return '<p class="text-red-500">URL WEB no es válida.</p>';
-        }
-    } else {
-        return '<p class="text-gray-500">No hay foto disponible.</p>';
-    }
 }
 
 function isValidUrl(string) {
@@ -931,6 +946,98 @@ function formatDate(dateString) {
         minute: '2-digit'
     });
 }
+
+async function createBlurredPlaceholder(imageSrc) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 40;
+            canvas.height = 30;
+            ctx.filter = 'blur(4px)';
+            ctx.drawImage(img, 0, 0, 40, 30);
+            resolve(canvas.toDataURL('image/jpeg', 0.1));
+        };
+        img.onerror = () => resolve(null);
+        img.src = imageSrc;
+    });
+}
+
+function preloadImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = src;
+    });
+}
+
+function initImageHandling() {
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.classList.remove('opacity-0');
+                img.onload = () => {
+                    const clientId = img.closest('[data-client-id]')?.dataset.clientId;
+                    if (clientId) {
+                        localStorage.setItem(`cachedImage_${clientId}`, img.src);
+                    }
+                };
+                observer.unobserve(img);
+            }
+        });
+    }, { rootMargin: '50px 0px', threshold: 0.01 });
+
+    document.querySelectorAll('img.client-image').forEach(img => {
+        imageObserver.observe(img);
+    });
+
+    const criticalImages = Array.from(document.querySelectorAll('img.client-image')).slice(0, 5);
+    criticalImages.forEach(img => {
+        preloadImage(img.dataset.src).then(() => {
+            img.src = img.dataset.src;
+            img.classList.remove('opacity-0');
+        });
+    });
+}
+
+async function getClientPhotoHtml(client) {
+    let imageSrc = client.photo || client.urlWeb;
+    if (!imageSrc) {
+        return '<p class="text-gray-500">No hay foto disponible.</p>';
+    }
+
+    // Intentar obtener la imagen del almacenamiento local
+    const cachedImage = localStorage.getItem(`cachedImage_${client.id}`);
+    if (cachedImage) {
+        imageSrc = cachedImage;
+    }
+
+    // Crear placeholder borroso
+    const blurredPlaceholder = await createBlurredPlaceholder(imageSrc) || 
+        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 200'%3E%3Crect width='300' height='200' fill='%23cccccc'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-size='24px' fill='%23333333'%3ECargando...%3C/text%3E%3C/svg%3E";
+
+    return `
+        <div class="relative w-full h-96 bg-gray-200 rounded-lg overflow-hidden">
+            <img
+                src="${blurredPlaceholder}"
+                data-src="${sanitizeInput(imageSrc)}"
+                alt="Foto del cliente"
+                class="client-image lazyload absolute inset-0 w-full h-full object-cover transition-opacity duration-500 opacity-0"
+                loading="lazy"
+            />
+            <noscript>
+                <img src="${sanitizeInput(imageSrc)}" 
+                     alt="Foto del cliente" 
+                     class="absolute inset-0 w-full h-full object-cover" />
+            </noscript>
+        </div>`;
+}
+
 // **24. Función para Limpiar el Formulario**
 function clearForm() {
     console.log("Limpiando formulario...");
