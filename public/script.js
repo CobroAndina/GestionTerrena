@@ -482,6 +482,16 @@ async function saveLongitud(event) {
     }
 }
 
+async function saveDireccionVisita(event) {
+    if (foundClients.length > 0) {
+        foundClients[currentDuplicateIndex].direccionVisita = event.target.value;
+        await saveClientToIndexedDB(foundClients[currentDuplicateIndex]);
+        showMessage("Dirección de visita actualizada", 'success');
+    } else {
+        showMessage("No hay cliente seleccionado para guardar dirección de visita", 'error');
+    }
+}
+
 // **14. Funciones para Navegar entre Duplicados**
 function showPreviousDuplicate() {
     if (currentDuplicateIndex > 0) {
@@ -648,6 +658,7 @@ function processData(data, separator) {
         clientData.photo = clientData.photo || null;
         clientData.latitud = clientData.latitud || "";
         clientData.longitud = clientData.longitud || "";
+        clientData.direccionVisita = clientData.direccionVisita || ""; // Añade esta línea
 
         return clientData;
     });
@@ -999,6 +1010,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (longitudInput) {
         longitudInput.addEventListener("input", validateLongitud);
         longitudInput.addEventListener("blur", saveLongitud);
+    }
+
+    const direccionVisitaInput = document.getElementById("direccionVisita");
+    if (direccionVisitaInput) {
+        direccionVisitaInput.addEventListener("input", saveDireccionVisita);
     }
 
     const searchButton = document.getElementById("searchButton");
